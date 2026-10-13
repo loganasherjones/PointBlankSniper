@@ -1,4 +1,4 @@
-## Interface: 120100, 50503
+## Interface: 120100, 120105, 50503, 16001
 ## Title: Point Blank Sniper
 ## Version: @project-version@
 ## Author: plusmouse
