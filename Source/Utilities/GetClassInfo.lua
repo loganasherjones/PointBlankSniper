@@ -20,11 +20,11 @@ local ArmorInventoryTypes = {
 }
 
 for _, id in pairs(Enum.InventoryType) do
-  NAME_TO_INVENTORY_SLOT[GetItemInventorySlotInfo(id)] = id
+  NAME_TO_INVENTORY_SLOT[C_Item.GetItemInventorySlotInfo(id)] = id
 end
 
 function PointBlankSniper.Utilities.GetClassInfo(itemID, battlePetSpeciesID)
-  local _, _, _, inventorySlotStr, _, classID, subClassID = GetItemInfoInstant(itemID)
+  local _, _, _, inventorySlotStr, _, classID, subClassID = C_Item.GetItemInfoInstant(itemID)
   local inventoryType = NAME_TO_INVENTORY_SLOT[_G[inventorySlotStr]]
 
   if classID == Enum.ItemClass.Battlepet then

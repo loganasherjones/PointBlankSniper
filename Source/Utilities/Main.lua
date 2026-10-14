@@ -61,7 +61,7 @@ function PointBlankSniper.Utilities.ItemKeyStringToItemKey(itemKeyString)
 end
 
 function PointBlankSniper.Utilities.IsGear(itemID)
-  local classID = select(6, GetItemInfoInstant(itemID))
+  local classID = select(6, C_Item.GetItemInfoInstant(itemID))
   return classID == Enum.ItemClass.Weapon or classID == Enum.ItemClass.Armor
 end
 
