@@ -9,6 +9,10 @@ POINT_BLANK_SNIPER_LOCALES.enUS = function()
   L["STOP"] = "Stop"
   L["SHOPPING_LIST_COLON"] = "Shopping List:"
   L["COMPARISON_PRICE"] = "Comparison Price"
+  L["PROFIT"] = "Profit"
+  L["DISCOUNT"] = "Discount"
+  L["SALE_RATE"] = "Sale Rate"
+  L["TOTAL_QUANTITY"] = "Total Qty"
 
   L["SCAN_MODE_TEXT"] = "Scan mode, some modes are faster, experiment:"
   L["BLANK_MODE_TEXT"] = "Blank (default, always works)"

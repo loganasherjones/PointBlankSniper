@@ -24,6 +24,38 @@ local SNIPE_RESULTS_TABLE_LAYOUT = {
   },
   {
     headerTemplate = "AuctionatorStringColumnHeaderTemplate",
+    headerParameters = { "profit" },
+    headerText = POINT_BLANK_SNIPER_L_PROFIT,
+    cellTemplate = "AuctionatorStringCellTemplate",
+    cellParameters = { "profitText" },
+    width = 140
+  },
+  {
+    headerTemplate = "AuctionatorStringColumnHeaderTemplate",
+    headerParameters = { "discount" },
+    headerText = POINT_BLANK_SNIPER_L_DISCOUNT,
+    cellTemplate = "AuctionatorStringCellTemplate",
+    cellParameters = { "discountText" },
+    width = 80
+  },
+  {
+    headerTemplate = "AuctionatorStringColumnHeaderTemplate",
+    headerParameters = { "saleRate" },
+    headerText = POINT_BLANK_SNIPER_L_SALE_RATE,
+    cellTemplate = "AuctionatorStringCellTemplate",
+    cellParameters = { "saleRateText" },
+    width = 80
+  },
+  {
+    headerTemplate = "AuctionatorStringColumnHeaderTemplate",
+    headerParameters = { "totalQuantity" },
+    headerText = POINT_BLANK_SNIPER_L_TOTAL_QUANTITY,
+    cellTemplate = "AuctionatorStringCellTemplate",
+    cellParameters = { "totalQuantityText" },
+    width = 80
+  },
+  {
+    headerTemplate = "AuctionatorStringColumnHeaderTemplate",
     headerParameters = { "isNew" },
     headerText = POINT_BLANK_SNIPER_L_IS_NEW,
     cellTemplate = "AuctionatorStringCellTemplate",
@@ -64,8 +96,36 @@ local function ResultKey(result)
   return Auctionator.Utilities.ItemKeyString(result.itemKey) .. " " .. result.minPrice
 end
 
+-- Fraction of the sale price kept after the auction house cut
+local AH_CUT_MULTIPLIER = 0.95
+
+local function AddMarketInfo(r, priceSource)
+  local reference = priceSource:GetReferencePrice(r.itemKey)
+  if reference and reference > 0 and r.minPrice > 0 then
+    r.profit = math.floor(reference * AH_CUT_MULTIPLIER - r.minPrice)
+    if r.profit < 0 then
+      r.profitText = "-" .. GetMoneyString(-r.profit, true)
+    else
+      r.profitText = GetMoneyString(r.profit, true)
+    end
+    r.discount = reference / r.minPrice
+    r.discountText = string.format("%.1fx", r.discount)
+  else
+    r.profit = nil
+    r.profitText = ""
+    r.discount = nil
+    r.discountText = ""
+  end
+
+  r.saleRate = PointBlankSniper.PriceCheck.GetSaleRate(r.itemKey)
+  r.saleRateText = r.saleRate and string.format("%.3f", r.saleRate) or ""
+
+  r.totalQuantityText = tostring(r.totalQuantity)
+end
+
 function PointBlankSniperDataProviderMixin:ProcessThisScan(results, lastBatch)
   local showHighlights = PointBlankSniper.Config.Get(PointBlankSniper.Config.Options.HIGHLIGHT_NEW_RESULTS)
+  local priceSource = PointBlankSniper.PriceCheck.Get()
   local newResults = CopyTable(results)
   for _, r in ipairs(newResults) do
     local key = ResultKey(r)
@@ -73,6 +133,7 @@ function PointBlankSniperDataProviderMixin:ProcessThisScan(results, lastBatch)
     local isNew = not self.lastRound[key]
     r.highlight = isNew and showHighlights
     r.isNew = isNew and AUCTIONATOR_L_UNDERCUT_YES or AUCTIONATOR_L_UNDERCUT_NO
+    AddMarketInfo(r, priceSource)
   end
   self:AppendEntries(newResults, lastBatch)
 end
@@ -101,9 +162,25 @@ function PointBlankSniperDataProviderMixin:UniqueKey(entry)
   return Auctionator.Utilities.ItemKeyString(entry.itemKey)
 end
 
+-- Like NumberComparator, but entries missing the field always sort last
+local function OptionalNumberComparator(sortDirection, fieldName)
+  local comparator = Auctionator.Utilities.NumberComparator(sortDirection, fieldName)
+  return function(left, right)
+    if left[fieldName] == nil or right[fieldName] == nil then
+      return left[fieldName] ~= nil and right[fieldName] == nil
+    end
+    return comparator(left, right)
+  end
+end
+
 local COMPARATORS = {
   minPrice = Auctionator.Utilities.NumberComparator,
+  comparisonPrice = OptionalNumberComparator,
   name = Auctionator.Utilities.StringComparator,
+  profit = OptionalNumberComparator,
+  discount = OptionalNumberComparator,
+  saleRate = OptionalNumberComparator,
+  totalQuantity = Auctionator.Utilities.NumberComparator,
   isNew = Auctionator.Utilities.StringComparator,
 }
 

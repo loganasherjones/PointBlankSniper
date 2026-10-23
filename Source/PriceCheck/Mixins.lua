@@ -8,6 +8,11 @@ function PointBlankSniper.PriceCheck.PriceCheckMixin:CheckResult(price, itemKey)
   error("This needs to be overridden")
 end
 
+-- The full market value, without the percentage applied
+function PointBlankSniper.PriceCheck.PriceCheckMixin:GetReferencePrice(itemKey)
+  error("This needs to be overridden")
+end
+
 PointBlankSniper.PriceCheck.NoneMixin = CreateFromMixins(PointBlankSniper.PriceCheck.PriceCheckMixin)
 
 function PointBlankSniper.PriceCheck.NoneMixin:GetValueUsed(itemKey)
@@ -16,6 +21,10 @@ end
 
 function PointBlankSniper.PriceCheck.NoneMixin:CheckResult(price, itemKey)
   return true
+end
+
+function PointBlankSniper.PriceCheck.NoneMixin:GetReferencePrice(itemKey)
+  return nil
 end
 
 PointBlankSniper.PriceCheck.TSMMixin = CreateFromMixins(PointBlankSniper.PriceCheck.PriceCheckMixin)
@@ -43,6 +52,18 @@ function PointBlankSniper.PriceCheck.TSMMixin:CheckResult(price, itemKey)
   return TSMPrice and price <= TSMPrice * self.percentage
 end
 
+function PointBlankSniper.PriceCheck.TSMMixin:GetReferencePrice(itemKey)
+  return TSM_API.GetCustomPriceValue(self.parameter, ToTSMItemString(itemKey))
+end
+
+-- Independent of the chosen price source, nil if TSM isn't loaded or has no data
+function PointBlankSniper.PriceCheck.GetSaleRate(itemKey)
+  if not TSM_API then
+    return nil
+  end
+  return TSM_API.GetCustomPriceValue("dbregionsalerate", ToTSMItemString(itemKey))
+end
+
 PointBlankSniper.PriceCheck.OEMixin = CreateFromMixins(PointBlankSniper.PriceCheck.PriceCheckMixin)
 
 function PointBlankSniper.PriceCheck.OEMixin:Init(parameter, percentage)
@@ -64,4 +85,12 @@ function PointBlankSniper.PriceCheck.OEMixin:CheckResult(price, itemKey)
   local OEPrice = o[self.parameter]
 
   return OEPrice and OEPrice ~= 0 and price <= OEPrice * self.percentage
+end
+
+function PointBlankSniper.PriceCheck.OEMixin:GetReferencePrice(itemKey)
+  local o = {}
+  OEMarketInfo(itemKey.itemID, o)
+  local OEPrice = o[self.parameter]
+
+  return OEPrice and OEPrice ~= 0 and OEPrice or nil
 end
